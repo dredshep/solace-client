@@ -9,7 +9,7 @@ import { getSolaceRiskBalances, getSolaceRiskScores } from '../utils/api'
 import { useProvider } from '../context/ProviderManager'
 import { useCachedData } from '../context/CachedDataManager'
 import { useNetwork } from '../context/NetworkManager'
-import { Policyholder, getSigner, getGasSettings } from '@solace-fi/sdk'
+import { Policyholder, getSigner, getGasSettings, getGasPrice } from '@solace-fi/sdk'
 
 export const useFunctions = () => {
   const { keyContracts } = useContracts()
@@ -219,10 +219,10 @@ export const useFunctions = () => {
       },
     }
     const signer = await getSigner({ network, account })
-    const gasSettings = await getGasSettings(network.chainId, signer, { gasLimit: GAS_LIMIT })
+    const gasPrice = await getGasPrice(signer)
+    const gasSettings = await getGasSettings(network.chainId, gasPrice, { gasLimit: GAS_LIMIT })
     const policyFuncs = new Policyholder(network.chainId, signer)
     const tx = await policyFuncs.activatePolicy(account, coverLimit, deposit, referralCode, gasSettings)
-    console.log('activate', tx)
     const localTx: LocalTx = {
       hash: tx.hash,
       type: FunctionName.SOTERIA_ACTIVATE,
