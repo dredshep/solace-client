@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react'
 import { BigNumber } from 'ethers'
-import { ADDRESS_ZERO, GAS_LIMIT, ZERO } from '../constants'
+import { ADDRESS_ZERO, GAS_LIMIT, ZERO, ALCHEMY_ETHEREUM_API_KEY } from '../constants'
 import { FunctionName, TransactionCondition } from '../constants/enums'
 import { LocalTx, SolaceRiskScore } from '../constants/types'
 import { useContracts } from '../context/ContractsManager'
@@ -9,6 +9,7 @@ import { getSolaceRiskBalances, getSolaceRiskScores } from '../utils/api'
 import { useProvider } from '../context/ProviderManager'
 import { useCachedData } from '../context/CachedDataManager'
 import { useNetwork } from '../context/NetworkManager'
+import { Policyholder, getSigner, getGasSettings } from '@solace-fi/sdk'
 
 export const useFunctions = () => {
   const { keyContracts } = useContracts()
@@ -197,17 +198,37 @@ export const useFunctions = () => {
     deposit: BigNumber,
     referralCode: string | []
   ) => {
+    // if (!solaceCoverProduct) return { tx: null, localTx: null }
+    // const tx = await solaceCoverProduct.activatePolicy(account, coverLimit, deposit, referralCode, {
+    //   ...gasConfig,
+    //   gasLimit: GAS_LIMIT,
+    // })
+    // const localTx: LocalTx = {
+    //   hash: tx.hash,
+    //   type: FunctionName.SOTERIA_ACTIVATE,
+    //   status: TransactionCondition.PENDING,
+    // }
+    // return { tx, localTx }
+
     if (!solaceCoverProduct) return { tx: null, localTx: null }
-    const tx = await solaceCoverProduct.activatePolicy(account, coverLimit, deposit, referralCode, {
-      ...gasConfig,
-      gasLimit: GAS_LIMIT,
-    })
+    const n = {
+      chainId: 4,
+      rpc: {
+        httpsUrl: `https://eth-rinkeby.alchemyapi.io/v2/${String(ALCHEMY_ETHEREUM_API_KEY)}`,
+        pollingInterval: 12000,
+      },
+    }
+    const signer = await getSigner(n, 'metamask', account)
+    const gasSettings = getGasSettings(n.chainId, 'metamask', 129, GAS_LIMIT)
+    const policyFuncs = new Policyholder(n.chainId, signer)
+    const res = await policyFuncs.activatePolicy(account, coverLimit, deposit, referralCode, gasSettings)
+    console.log('activate', res)
     const localTx: LocalTx = {
-      hash: tx.hash,
+      hash: '',
       type: FunctionName.SOTERIA_ACTIVATE,
       status: TransactionCondition.PENDING,
     }
-    return { tx, localTx }
+    return { tx: null, localTx }
   }
 
   const deactivatePolicy = async () => {
