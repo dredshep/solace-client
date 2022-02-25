@@ -211,24 +211,24 @@ export const useFunctions = () => {
     // return { tx, localTx }
 
     if (!solaceCoverProduct) return { tx: null, localTx: null }
-    const n = {
+    const network = {
       chainId: 4,
       rpc: {
         httpsUrl: `https://eth-rinkeby.alchemyapi.io/v2/${String(ALCHEMY_ETHEREUM_API_KEY)}`,
         pollingInterval: 12000,
       },
     }
-    const signer = await getSigner(n, 'metamask', account)
-    const gasSettings = getGasSettings(n.chainId, 'metamask', 129, GAS_LIMIT)
-    const policyFuncs = new Policyholder(n.chainId, signer)
-    const res = await policyFuncs.activatePolicy(account, coverLimit, deposit, referralCode, gasSettings)
-    console.log('activate', res)
+    const signer = await getSigner({ network, account })
+    const gasSettings = await getGasSettings(network.chainId, signer, { gasLimit: GAS_LIMIT })
+    const policyFuncs = new Policyholder(network.chainId, signer)
+    const tx = await policyFuncs.activatePolicy(account, coverLimit, deposit, referralCode, gasSettings)
+    console.log('activate', tx)
     const localTx: LocalTx = {
-      hash: '',
+      hash: tx.hash,
       type: FunctionName.SOTERIA_ACTIVATE,
       status: TransactionCondition.PENDING,
     }
-    return { tx: null, localTx }
+    return { tx, localTx }
   }
 
   const deactivatePolicy = async () => {
