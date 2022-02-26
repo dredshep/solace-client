@@ -9,7 +9,7 @@ import { getSolaceRiskBalances, getSolaceRiskScores } from '../utils/api'
 import { useProvider } from '../context/ProviderManager'
 import { useCachedData } from '../context/CachedDataManager'
 import { useNetwork } from '../context/NetworkManager'
-import { Policyholder, getSigner, getGasSettings, getGasPrice } from '@solace-fi/sdk'
+import { Policyholder, solaceUtils } from '@solace-fi/sdk'
 
 export const useFunctions = () => {
   const { keyContracts } = useContracts()
@@ -218,9 +218,9 @@ export const useFunctions = () => {
         pollingInterval: 12000,
       },
     }
-    const signer = await getSigner({ network, account })
-    const gasPrice = await getGasPrice(signer)
-    const gasSettings = await getGasSettings(network.chainId, gasPrice, { gasLimit: GAS_LIMIT })
+    const signer = await solaceUtils.getSigner({ network, account })
+    const gasPrice = await solaceUtils.getGasPrice(signer)
+    const gasSettings = await solaceUtils.getGasSettings(network.chainId, gasPrice, { gasLimit: GAS_LIMIT })
     const policyFuncs = new Policyholder(network.chainId, signer)
     const tx = await policyFuncs.activatePolicy(account, coverLimit, deposit, referralCode, gasSettings)
     const localTx: LocalTx = {
